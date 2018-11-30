@@ -684,7 +684,12 @@ const (
 	SFlowTypeTokenRingInterfaceCounters SFlowCounterRecordType = 3
 	SFlowType100BaseVGInterfaceCounters SFlowCounterRecordType = 4
 	SFlowTypeVLANCounters               SFlowCounterRecordType = 5
+	SFlowTypeLACPCounters               SFlowCounterRecordType = 7
 	SFlowTypeProcessorCounters          SFlowCounterRecordType = 1001
+	SFlowTypeOpenflowPortCounters       SFlowCounterRecordType = 1004
+	SFlowTypePORTNAMECounters           SFlowCounterRecordType = 1005
+	SFLowTypeAPPRESOURCESCounters       SFlowCounterRecordType = 2203
+	SFlowTypeOVSDPCounters              SFlowCounterRecordType = 2207	
 )
 
 func (cr SFlowCounterRecordType) String() string {
@@ -699,8 +704,18 @@ func (cr SFlowCounterRecordType) String() string {
 		return "100BaseVG Interface Counters"
 	case SFlowTypeVLANCounters:
 		return "VLAN Counters"
+	case SFlowTypeLACPCounters:
+		return "LACP Counters"
 	case SFlowTypeProcessorCounters:
 		return "Processor Counters"
+	case SFlowTypeOpenflowPortCounters:
+		return "Openflow Port Counters"
+	case SFlowTypePORTNAMECounters:
+		return "PORT NAME Counters"
+	case SFLowTypeAPPRESOURCESCounters:
+		return "AppResources Counters"
+	case SFlowTypeOVSDPCounters:
+		return "OVSDP Counters"
 	default:
 		return ""
 
@@ -743,20 +758,42 @@ func decodeCounterSample(data *[]byte, expanded bool) (SFlowCounterSample, error
 				return s, err
 			}
 		case SFlowTypeTokenRingInterfaceCounters:
-			skipRecord(data)
-			return s, errors.New("skipping TypeTokenRingInterfaceCounters")
+			if record, err := decodeTokenRingInterfaceCounters(data); err == nil {
+				s.Records = append(s.Records, record)
+			} else {
+				return s, err
+			}
 		case SFlowType100BaseVGInterfaceCounters:
 			skipRecord(data)
 			return s, errors.New("skipping Type100BaseVGInterfaceCounters")
 		case SFlowTypeVLANCounters:
+			if record, err := decodeVLANCounters(data); err == nil {
+				s.Records = append(s.Records, record)
+			} else {
+				return s, err
+			}
+		case SFlowTypeLACPCounters:
 			skipRecord(data)
-			return s, errors.New("skipping TypeVLANCounters")
+			return s, errors.New("skipping TypeLACPCounters")
 		case SFlowTypeProcessorCounters:
 			if record, err := decodeProcessorCounters(data); err == nil {
 				s.Records = append(s.Records, record)
 			} else {
 				return s, err
 			}
+		case SFlowTypeOpenflowPortCounters:
+			skipRecord(data)
+			return s, errors.New("skipping TypeOpenflowPortCounters")
+		case SFlowTypePORTNAMECounters:
+			skipRecord(data)
+			return s, errors.New("skipping PORT NAME Counters")
+		case SFLowTypeAPPRESOURCESCounters:
+			skipRecord(data)
+			return s, errors.New("skipping TypeAPPRESOURCESCounters ")
+		case SFlowTypeOVSDPCounters:
+			skipRecord(data)
+			return s, errors.New("skipping TypeOVSDPCounters")
+
 		default:
 			return s, fmt.Errorf("Invalid counter record type: %d", counterRecordType)
 		}
@@ -1970,8 +2007,20 @@ func (bcr SFlowBaseCounterRecord) GetType() SFlowCounterRecordType {
 		return SFlowType100BaseVGInterfaceCounters
 	case SFlowTypeVLANCounters:
 		return SFlowTypeVLANCounters
+	case SFlowTypeLACPCounters:
+		return SFlowTypeLACPCounters
 	case SFlowTypeProcessorCounters:
 		return SFlowTypeProcessorCounters
+	case SFlowTypeProcessorCounters:
+		return  SFlowTypeProcessorCounters
+	case SFlowTypeOpenflowPortCounters:
+		return SFlowTypeOpenflowPortCounters
+	case SFlowTypePORTNAMECounters:
+		return SFlowTypePORTNAMECounters
+	case SFLowTypeAPPRESOURCESCounters:
+		return SFLowTypeAPPRESOURCESCounters
+	case SFlowTypeOVSDPCounters:
+		return SFlowTypeOVSDPCounters
 
 	}
 	unrecognized := fmt.Sprint("Unrecognized counter record type:", bcr.Format)
@@ -2081,6 +2130,58 @@ func decodeGenericInterfaceCounters(data *[]byte) (SFlowGenericInterfaceCounters
 	return gic, nil
 }
 
+type SFlowTokenRingInterfaceCounters struct {
+	SFlowBaseCounterRecord
+    	Dot5StatsLineErrors         uint32   
+    	Dot5StatsBurstErrors	    uint32
+    	Dot5StatsACErrors           uint32
+    	Dot5StatsAbortTransErrors   uint32
+    	Dot5StatsInternalErrors     uint32
+    	Dot5StatsLostFrameErrors    uint32
+    	Dot5StatsReceiveCongestions uint32
+    	Dot5StatsFrameCopiedErrors  uint32
+    	Dot5StatsTokenErrors        uint32
+    	Dot5StatsSoftErrors         uint32
+    	Dot5StatsHardErrors         uint32
+    	Dot5StatsSignalLoss         uint32
+    	Dot5StatsTransmitBeacons    uint32
+    	Dot5StatsRecoverys          uint32
+    	Dot5StatsLobeWires          uint32
+    	Dot5StatsRemoves            uint32
+    	Dot5StatsSingles            uint32
+    	Dot5StatsFreqErrors         uint32
+
+}
+
+func decodeTokenRingInterfaceCounters(data *[]byte) (SFlowTokenRingInterfaceCounters, error) {
+	tc := SFlowTokenRingInterfaceCounters{}
+	var cdf SFlowCounterDataFormat
+
+	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))
+	tc.EnterpriseID, ec.Format = cdf.decode()
+	*data, tc.FlowDataLength = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsLineErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsBurstErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsACErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsAbortTransErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsInternalErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsLostFrameErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsReceiveCongestions = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsFrameCopiedErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsTokenErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsSoftErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsHardErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsSignalLoss = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsTransmitBeacons = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsRecoverys = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsLobeWires = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsRemoves = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsSingles = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsFreqErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	return tc, nil
+}
+
+ 
 // **************************************************
 //  Counter Record
 // **************************************************
@@ -2096,7 +2197,7 @@ func decodeGenericInterfaceCounters(data *[]byte) (SFlowGenericInterfaceCounters
 //  +--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+--+
 
 type SFlowEthernetCounters struct {
-	SFlowBaseCounterRecord
+	SFlowBaseCounterRecord    
 	AlignmentErrors           uint32
 	FCSErrors                 uint32
 	SingleCollisionFrames     uint32
@@ -2134,6 +2235,40 @@ func decodeEthernetCounters(data *[]byte) (SFlowEthernetCounters, error) {
 	*data, ec.SymbolErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
 	return ec, nil
 }
+
+// VLAN Counter
+
+type SFlowVLANcounters struct {
+	SFlowBaseCounterRecord
+	VlanID                    uint32
+	Octets              	  uint64
+	UcastPkts                 uint32
+	MulticastPkts             uint32
+	BroadcastPkts             uint32
+	Discards                  uint32
+
+}
+
+func decodeVLANCounters(data *[]byte) (SFlowVLANcounters, error) {
+	vc := SFlowVLANcounters struct {}
+	var cdf SFlowCounterDataFormat
+	var high32, low32 uint32
+
+
+	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))
+	vc.EnterpriseID, vc.Format = cdf.decode()
+	*data, vc.FlowDataLength = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, vc.VlanID  = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, high32 = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, low32 = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	vc.Octets = (uint64(high32) << 32) + uint64(low32)
+	*data, vc.UcastPkts = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, vc.MulticastPkts = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, vc.BroadcastPkts = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, vc.Discards = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	return vc,nil
+}
+
 
 // **************************************************
 //  Processor Counter Record
