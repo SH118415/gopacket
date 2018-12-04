@@ -2189,19 +2189,19 @@ func decodeTokenRingInterfaceCounters(data *[]byte) (SFlowTokenRingInterfaceCoun
 
 type SFlow100BaseVGInterfaceCounters struct {
 	SFlowBaseCounterRecord 
-	Dot12InHighPriorityFrames  	 uint32
-    Dot12InHighPriorityOctets  	 uint64
-    Dot12InNormPriorityFrames  	 uint32
-    Dot12InNormPriorityOctets  	 uint64
-    Dot12InIPMErrors           	 uint32
-    Dot12InOversizeFrameErrors 	 uint32
-    Dot12InDataErrors          	 uint32
-    Dot12InNullAddressedFrames 	 uint32
-    Dot12OutHighPriorityFrames 	 uint32
-    Dot12OutHighPriorityOctets   uint64
-    Dot12TransitionIntoTrainings uint32
-    Dot12HCInHighPriorityOctets  uint64
-    Dot12HCInNormPriorityOctets  uint64
+	Dot12InHighPriorityFrames    uint32
+    	Dot12InHighPriorityOctets    uint64
+    	Dot12InNormPriorityFrames    uint32
+    	Dot12InNormPriorityOctets    uint64
+    	Dot12InIPMErrors             uint32
+    	Dot12InOversizeFrameErrors   uint32
+    	Dot12InDataErrors            uint32
+    	Dot12InNullAddressedFrames   uint32
+    	Dot12OutHighPriorityFrames   uint32
+    	Dot12OutHighPriorityOctets   uint64
+    	Dot12TransitionIntoTrainings uint32
+    	Dot12HCInHighPriorityOctets  uint64
+    	Dot12HCInNormPriorityOctets  uint64
 	Dot12HCOutHighPriorityOctets uint64
 }
 
