@@ -764,8 +764,12 @@ func decodeCounterSample(data *[]byte, expanded bool) (SFlowCounterSample, error
 				return s, err
 			}
 		case SFlowType100BaseVGInterfaceCounters:
-			skipRecord(data)
-			return s, errors.New("skipping Type100BaseVGInterfaceCounters")
+			if record, err := decode100BaseVGInterfaceCounters(data); err == nil {
+				s.Records = append(s.Records, record)
+			} else {
+				return s, err
+			}
+			
 		case SFlowTypeVLANCounters:
 			if record, err := decodeVLANCounters(data); err == nil {
 				s.Records = append(s.Records, record)
@@ -2181,6 +2185,50 @@ func decodeTokenRingInterfaceCounters(data *[]byte) (SFlowTokenRingInterfaceCoun
 	return tc, nil
 }
 
+//100BaseVGInterfaceCounters
+
+type SFlow100BaseVGInterfaceCounters struct {
+	SFlowBaseCounterRecord 
+	Dot12InHighPriorityFrames  	 uint32
+    Dot12InHighPriorityOctets  	 uint64
+    Dot12InNormPriorityFrames  	 uint32
+    Dot12InNormPriorityOctets  	 uint64
+    Dot12InIPMErrors           	 uint32
+    Dot12InOversizeFrameErrors 	 uint32
+    Dot12InDataErrors          	 uint32
+    Dot12InNullAddressedFrames 	 uint32
+    Dot12OutHighPriorityFrames 	 uint32
+    Dot12OutHighPriorityOctets   uint64
+    Dot12TransitionIntoTrainings uint32
+    Dot12HCInHighPriorityOctets  uint64
+    Dot12HCInNormPriorityOctets  uint64
+	Dot12HCOutHighPriorityOctets uint64
+}
+
+func decode100BaseVGInterfaceCounters(data *[]byte) (SFlow100BaseVGInterfaceCounters, error) {
+	bc := SFlow100BaseVGInterfaceCounters {}
+	var cdf SFlowCounterDataFormat
+
+	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))
+	bc.EnterpriseID, bc.Format = cdf.decode()
+	*data, bc.FlowDataLength = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InHighPriorityFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12InNormPriorityFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InNormPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12InIPMErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InOversizeFrameErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InDataErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InNullAddressedFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12OutHighPriorityFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12OutHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint32((*data)[:8])
+	*data, bc.Dot12TransitionIntoTrainings = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12HCInHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint32((*data)[:8])
+	*data, bc.Dot12HCInNormPriorityOctets = (*data)[8:], binary.BigEndian.Uint32((*data)[:8])
+	*data, bc.Dot12HCOutHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint32((*data)[:8])
+	return bc, nil
+}
+
  
 // **************************************************
 //  Counter Record
@@ -2252,16 +2300,12 @@ type SFlowVLANcounters struct {
 func decodeVLANCounters(data *[]byte) (SFlowVLANcounters, error) {
 	vc := SFlowVLANcounters struct {}
 	var cdf SFlowCounterDataFormat
-	var high32, low32 uint32
-
 
 	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))
 	vc.EnterpriseID, vc.Format = cdf.decode()
 	*data, vc.FlowDataLength = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
-	*data, vc.VlanID  = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
-	*data, high32 = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
-	*data, low32 = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
-	vc.Octets = (uint64(high32) << 32) + uint64(low32)
+	*data, vc.VlanID = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, vc.Octets = (*data)[8:], binary.BigEndian.Uint32((*data)[:8])
 	*data, vc.UcastPkts = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
 	*data, vc.MulticastPkts = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
 	*data, vc.BroadcastPkts = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
