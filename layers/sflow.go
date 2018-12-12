@@ -2286,7 +2286,7 @@ func decodeEthernetCounters(data *[]byte) (SFlowEthernetCounters, error) {
 
 // VLAN Counter
 
-type SFlowVLANcounters struct {
+type SFlowVLANCounters struct {
 	SFlowBaseCounterRecord
 	VlanID                    uint32
 	Octets              	  uint64
@@ -2297,8 +2297,8 @@ type SFlowVLANcounters struct {
 
 }
 
-func decodeVLANCounters(data *[]byte) (SFlowVLANcounters, error) {
-	vc := SFlowVLANcounters struct {}
+func decodeVLANCounters(data *[]byte) (SFlowVLANCounters, error) {
+	vc := SFlowVLANCounters struct {}
 	var cdf SFlowCounterDataFormat
 
 	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))

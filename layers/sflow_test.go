@@ -6,10 +6,11 @@
 package layers
 
 import (
-	"github.com/google/gopacket"
 	"net"
 	"reflect"
 	"testing"
+
+	"github.com/google/gopacket"
 )
 
 // Test packet collected from live network. See the test below for contents
@@ -277,6 +278,21 @@ var SFlowTestPacket8 = []byte{
 	0x20, 0x01, 0x0d, 0xb8, 0x00, 0x00, 0x00, 0x00,
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 	0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0x80,
+}
+
+// Vlan counter samples
+var SFlowTestPacket9 = []byte{
+	0x00, 0x00, 0x00, 0x05, 0x00, 0x00, 0x00, 0x01,
+	0x0a, 0x14, 0x04, 0x00, 0x00, 0x00, 0x00, 0x64,
+	0x00, 0x01, 0x78, 0xe0, 0x73, 0x03, 0x48, 0x78,
+	0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x04,
+	0x00, 0x00, 0x00, 0x34, 0x00, 0x01, 0x78, 0xe0,
+	0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01,
+	0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x05,
+	0x00, 0x00, 0x00, 0x1c, 0x00, 0x00, 0x00, 0x0a,
+	0x00, 0x00, 0x00, 0x00, 0x01, 0x8c, 0x2c, 0xcc,
+	0x00, 0x00, 0x96, 0x83, 0x00, 0x02, 0x90, 0x16,
+	0x00, 0x01, 0xf6, 0x73, 0x00, 0x00, 0x00, 0x00,
 }
 
 func TestDecodeUDPSFlow(t *testing.T) {
@@ -922,6 +938,54 @@ func TestDecodeProcessorCounter(t *testing.T) {
 						FiveMinCpu:  0x0532,
 						TotalMemory: 0xe78d7000,
 						FreeMemory:  0x55e77000,
+					},
+				},
+			},
+		},
+	}
+	if !reflect.DeepEqual(want, got) {
+		t.Errorf("SFlow layer mismatch, \nwant:\n\n%#v\ngot:\n\n\n%#v\n\n", want, got)
+	}
+}
+
+func TestDecodeVLANCounter(t *testing.T) {
+	p := gopacket.NewPacket(SFlowTestPacket9, LayerTypeSFlow, gopacket.Default)
+
+	if p.ErrorLayer() != nil {
+		t.Error("Failed to decode packet:", p.ErrorLayer().Error())
+	}
+	checkLayers(p, []gopacket.LayerType{LayerTypeSFlow}, t)
+
+	got := p.ApplicationLayer().(*SFlowDatagram)
+
+	want := &SFlowDatagram{
+		DatagramVersion: uint32(5),
+		AgentAddress:    []byte{0x0a, 0x14, 0x04, 0x00},
+		SubAgentID:      uint32(0x64),
+		SequenceNumber:  uint32(96480),
+		AgentUptime:     uint32(1929595000),
+		SampleCount:     uint32(1),
+		CounterSamples: []SFlowCounterSample{
+			SFlowCounterSample{
+				Format:         SFlowTypeExpandedCounterSample,
+				SampleLength:   0x34,
+				SequenceNumber: 0x0178e0,
+				SourceIDClass:  0x00,
+				SourceIDIndex:  0x01,
+				RecordCount:    0x01,
+				Records: []SFlowRecord{
+					SFlowVLANCounters{
+						SFlowBaseCounterRecord: SFlowBaseCounterRecord{
+							EnterpriseID:   0x0,
+							Format:         SFlowTypeVLANCounters,
+							FlowDataLength: 0x1c,
+						},
+						VlanID:        0x0a,
+						Octets:        0x018c2ccc,
+						UcastPkts:     0x9683,
+						MulticastPkts: 0x029016,
+						BroadcastPkts: 0x01f673,
+						Discards:      0x00,
 					},
 				},
 			},
