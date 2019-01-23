@@ -767,11 +767,17 @@ func decodeCounterSample(data *[]byte, expanded bool) (SFlowCounterSample, error
 				return s, err
 			}
 		case SFlowTypeTokenRingInterfaceCounters:
-			skipRecord(data)
-			return s, errors.New("skipping TypeTokenRingInterfaceCounters")
+			if record, err := decodeTokenRingInterfaceCounters(data); err == nil {
+				s.Records = append(s.Records, record)
+			} else {
+				return s, err
+			}
 		case SFlowType100BaseVGInterfaceCounters:
-			skipRecord(data)
-			return s, errors.New("skipping Type100BaseVGInterfaceCounters")
+			if record, err := decode100BaseVGInterfaceCounters(data); err == nil {
+				s.Records = append(s.Records, record)
+			} else {
+				return s, err
+			}
 		case SFlowTypeVLANCounters:
 			if record, err := decodeVLANCounters(data); err == nil {
 				s.Records = append(s.Records, record)
@@ -2199,6 +2205,100 @@ func decodeEthernetCounters(data *[]byte) (SFlowEthernetCounters, error) {
 	*data, ec.InternalMacReceiveErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
 	*data, ec.SymbolErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
 	return ec, nil
+}
+
+type SFlowTokenRingInterfaceCounters struct {
+	SFlowBaseCounterRecord
+	Dot5StatsLineErrors         uint32
+	Dot5StatsBurstErrors        uint32
+	Dot5StatsACErrors           uint32
+	Dot5StatsAbortTransErrors   uint32
+	Dot5StatsInternalErrors     uint32
+	Dot5StatsLostFrameErrors    uint32
+	Dot5StatsReceiveCongestions uint32
+	Dot5StatsFrameCopiedErrors  uint32
+	Dot5StatsTokenErrors        uint32
+	Dot5StatsSoftErrors         uint32
+	Dot5StatsHardErrors         uint32
+	Dot5StatsSignalLoss         uint32
+	Dot5StatsTransmitBeacons    uint32
+	Dot5StatsRecoverys          uint32
+	Dot5StatsLobeWires          uint32
+	Dot5StatsRemoves            uint32
+	Dot5StatsSingles            uint32
+	Dot5StatsFreqErrors         uint32
+}
+
+func decodeTokenRingInterfaceCounters(data *[]byte) (SFlowTokenRingInterfaceCounters, error) {
+	tc := SFlowTokenRingInterfaceCounters{}
+	var cdf SFlowCounterDataFormat
+
+	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))
+	tc.EnterpriseID, tc.Format = cdf.decode()
+	*data, tc.FlowDataLength = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsLineErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsBurstErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsACErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsAbortTransErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsInternalErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsLostFrameErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsReceiveCongestions = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsFrameCopiedErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsTokenErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsSoftErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsHardErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsSignalLoss = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsTransmitBeacons = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsRecoverys = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsLobeWires = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsRemoves = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsSingles = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, tc.Dot5StatsFreqErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	return tc, nil
+}
+
+//100BaseVGInterfaceCounters
+
+type SFlow100BaseVGInterfaceCounters struct {
+	SFlowBaseCounterRecord
+	Dot12InHighPriorityFrames    uint32
+	Dot12InHighPriorityOctets    uint64
+	Dot12InNormPriorityFrames    uint32
+	Dot12InNormPriorityOctets    uint64
+	Dot12InIPMErrors             uint32
+	Dot12InOversizeFrameErrors   uint32
+	Dot12InDataErrors            uint32
+	Dot12InNullAddressedFrames   uint32
+	Dot12OutHighPriorityFrames   uint32
+	Dot12OutHighPriorityOctets   uint64
+	Dot12TransitionIntoTrainings uint32
+	Dot12HCInHighPriorityOctets  uint64
+	Dot12HCInNormPriorityOctets  uint64
+	Dot12HCOutHighPriorityOctets uint64
+}
+
+func decode100BaseVGInterfaceCounters(data *[]byte) (SFlow100BaseVGInterfaceCounters, error) {
+	bc := SFlow100BaseVGInterfaceCounters{}
+	var cdf SFlowCounterDataFormat
+
+	*data, cdf = (*data)[4:], SFlowCounterDataFormat(binary.BigEndian.Uint32((*data)[:4]))
+	bc.EnterpriseID, bc.Format = cdf.decode()
+	*data, bc.FlowDataLength = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InHighPriorityFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12InNormPriorityFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InNormPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12InIPMErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InOversizeFrameErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InDataErrors = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12InNullAddressedFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12OutHighPriorityFrames = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12OutHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12TransitionIntoTrainings = (*data)[4:], binary.BigEndian.Uint32((*data)[:4])
+	*data, bc.Dot12HCInHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12HCInNormPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	*data, bc.Dot12HCOutHighPriorityOctets = (*data)[8:], binary.BigEndian.Uint64((*data)[:8])
+	return bc, nil
 }
 
 // VLAN Counter
